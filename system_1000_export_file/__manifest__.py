@@ -9,6 +9,7 @@
     """,
     'website': '',
     'depends': [
+        'account',
         'account_accountant'
     ],
     'data': [
