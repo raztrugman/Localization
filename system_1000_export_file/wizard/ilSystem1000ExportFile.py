@@ -16,14 +16,11 @@ class ILSystem1000ExportFIle(models.TransientModel):
     unified_system_1000_data = fields.Binary('Unified System 1000 Data', readonly=True)
     filename = fields.Text(default='system_1000_export_files.zip', readonly=True)
 
-
-
     def _compute_my_companies_field(self):
         related_record_set = self.env['res.users'].search([('company_ids', '=', self.my_company_id.id)])
         self.my_companies = related_record_set
 
     def prepare_one_file_of_system_1000_data(self, suppliers):
-
         file_data = ""
         number_of_suppliers = 0
 
@@ -31,23 +28,33 @@ class ILSystem1000ExportFIle(models.TransientModel):
             data = ""
             data += "A"  # Field number 1
             if self.my_company_id.l10n_il_withh_tax_id_number:
-                data += str(self.my_company_id.l10n_il_withh_tax_id_number)  # Field number 2
+                if len(self.my_company_id.l10n_il_withh_tax_id_number) != 9 or \
+                        str(self.my_company_id.l10n_il_withh_tax_id_number)[0] != '9':
+                    raise UserError("Please assign appropriate withholding tax ID number!")
+                else:
+                    data += str(self.my_company_id.l10n_il_withh_tax_id_number)  # Field number 2
             else:
-                raise UserError("Please assign a withholding tax ID number!")
+                raise UserError("Please assign your withholding tax ID number!")
             return data
 
         def _prepare_inner_data(one_supplier):
             data = ""
             data += "B"  # Field number 3
             data += str(one_supplier.id).zfill(15)  # Field number 4
-            data += str(one_supplier.l10n_il_income_tax_id_number)  # Field number 5  ------------------------------------ NEED TO CHECK IF FALSE
-            data += str(one_supplier.vat)  # Field number 6 -------------------------------------- ----- NEED TO CHECK IF FALSE
+            if one_supplier.l10n_il_income_tax_id_number:
+                data += str(one_supplier.l10n_il_income_tax_id_number).zfill(9)  # Field number 5
+            else:
+                data += "".zfill(9)
+            if one_supplier.vat:
+                data += str(one_supplier.vat).zfill(9)  # Field number 6
+            else:
+                data += "".zfill(9)
             return data
 
         def _prepare_closing_line():
             data = ""
             data += "Z"  # Field number 7
-            data += str(self.my_company_id.l10n_il_withh_tax_id_number)  # Field number 8
+            data += str(self.my_company_id.l10n_il_withh_tax_id_number).zfill(9)  # Field number 8
             data += str(number_of_suppliers).zfill(4)  # Field number 9
             return data
 
@@ -116,7 +123,8 @@ class ILSystem1000ExportFIle(models.TransientModel):
 
         action = {
             'type': 'ir.actions.act_url',
-            'url': "web/content/?model=il.system.1000.export.file.wizard&id=" + str(self.id) + "&filename_field=filename&field=unified_system_1000_data&download=true&filename=" + self.filename,
+            'url': "web/content/?model=il.system.1000.export.file.wizard&id=" + str(self.id) +
+                   "&filename_field=filename&field=unified_system_1000_data&download=true&filename=" + self.filename,
             'target': 'self'
         }
         return action
