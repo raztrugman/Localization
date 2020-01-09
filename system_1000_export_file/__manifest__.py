@@ -8,8 +8,8 @@
         System 1000 Export file for Israel
     """,
     'website': '',
-    'depends':[
-        'account'
+    'depends': [
+        'account_accountant'
     ],
     'data': [
         'security/ir.model.access.csv',
