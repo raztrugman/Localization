@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+        <record id="system_1000_wizard_form" model="ir.ui.view">
+            <field name="name">il.system.1000.export.file.form</field>
+            <field name="model">il.system.1000.export.file.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Export System 1000 File of chosen company">
+                    <sheet>
+                        <h5>
+                            <div>Select a company and press ''Export System 1000 File'' to create a file to upload to SYSTEM 1000 of Israel Tax Authority(ITA)</div>
+                        </h5>
+                        <group>
+                            <field name="my_company_id"/>
+                        </group>
+                    </sheet>
+
+                    <footer>
+                        <button string="Cancel" special="cancel"/>
+                        <button string="Export System 1000 File" class="oe_highlight" type="object" name="export_system_1000_files"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>
