@@ -9,7 +9,8 @@
     """,
     'website': '',
     'depends': [
-
+        'account_reports',
+        'account_move'
     ],
     'data': [
         'security/ir.model.access.csv',
