@@ -8,7 +8,7 @@
         System 1000 Export file for Israel
     """,
     'website': '',
-    'depends': [
+    'depends':[
         'account'
     ],
     'data': [
