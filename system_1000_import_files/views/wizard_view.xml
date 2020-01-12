@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+
+    <record id="import_system_1000_files_view_menu" model="ir.actions.act_window">
+        <field name="name">Import System 1000 Files</field>
+        <field name="res_model">il.system.1000.import.files.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <menuitem id="menu_system_1000" parent="account.menu_finance_reports" name="System 1000" groups="account.group_account_user" sequence="0"/>
+    <menuitem id="menu_import_system_1000_files" parent="system_1000_import_files.menu_system_1000" name="Import files from System 1000"
+      action="import_system_1000_files_view_menu"/>
+</odoo>

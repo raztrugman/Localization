@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<odoo>
+    <data>
+        <record id="system_1000_wizard_form" model="ir.ui.view">
+            <field name="name">il.system.1000.import.files.form</field>
+            <field name="model">il.system.1000.import.files.wizard</field>
+            <field name="arch" type="xml">
+                <form string="Import files from System 1000">
+                    <sheet>
+                        <h5>
+                            <div>Upload corrects and incorrects files from SYSTEM 1000 of Israel Tax Authority(ITA)</div>
+                        </h5>
+                        <group>
+                            <button string="Uplaod"/>
+                        </group>
+                    </sheet>
+
+                    <footer>
+                        <button string="Cancel" special="cancel"/>
+                    </footer>
+                </form>
+            </field>
+        </record>
+    </data>
+</odoo>
