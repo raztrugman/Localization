@@ -1,132 +1,97 @@
 from odoo import fields, models, api
-from datetime import date
-import zipfile
-import io
-import base64
-from contextlib import closing
 from odoo.exceptions import UserError
 
 
 class ILSystem1000ImportFIles(models.TransientModel):
     _name = 'il.system.1000.import.files.wizard'
-    _description = "System 100 Import Files"
+    _description = "System 1000 Import Files"
 
-    my_company_id = fields.Many2one('res.company', string='Company to export',
-                                    required=True, default=lambda self: self.env.user.company_id)
-    unified_system_1000_data = fields.Binary('Unified System 1000 Data', readonly=True)
-    filename = fields.Text(default='system_1000_export_files.zip', readonly=True)
+    sys1000_corrects_file = fields.Binary('Corrects File')
+    sys1000_corrects_file_name = fields.Char()
+    sys1000_incorrects_file = fields.Binary('Incorrects File')
+    sys1000_incorrects_file_name = fields.Char()
 
-    def _compute_my_companies_field(self):
-        related_record_set = self.env['res.users'].search([('company_ids', '=', self.my_company_id.id)])
-        self.my_companies = related_record_set
+    def process_system_1000_imports_files(self):
+        def _process_incorrects_file():
+            with open(self.sys1000_incorrects_file) as file:
+                while True:
+                    current_field = file.read(1)
+                    if current_field != 'A':  # Field #38
+                        raise UserError("Problem with parsing file (Header line)")
+                        break
+                    current_field = file.read(9)  # Field #39 Withholding tax ID
+                    current_field = file.read(8)  # Field #40 Date
+                    current_field = file.read(1)  # Field #41 / #47
+                    if current_field != 'B' and current_field != 'Z':
+                        raise UserError("Problem with parsing file (Vendors line)")
+                        break
+                    while current_field == 'B':
+                        current_field = file.read(15)  # Field #42 Odoo ID
+                        current_field = file.read(9)  # Field #43 Income Tax ID
+                        current_field = file.read(9)  # Field #44 VAT ID Number
+                        current_field = file.read(2)  # Field #45 Error code
+                        current_field = file.read(50)  # Field #46 Error description
+                        current_field = file.read(1)  # Field #40 / #47
+                    if current_field != 'Z':
+                        raise UserError("Problem with parsing file (Conclusion line)")
+                        break
+                    current_field = file.read(9)  # Field #48 Withholding tax ID (Same as field 39)
+                    current_field = file.read(4)  # Field #49 number of vendors accepted in the export file
+                    current_field = file.read(4)  # Field #50 number of corrects vendors
+                    current_field = file.read(4)  # Field #51 number of incorrects vendors
 
-    def prepare_one_file_of_system_1000_data(self, suppliers):
-        file_data = ""
-        number_of_suppliers = 0
+                    file.close()
+                    break
 
-        def _prepare_header_line():
-            data = ""
-            data += "A"  # Field number 1
-            if self.my_company_id.l10n_il_withh_tax_id_number:
-                if len(self.my_company_id.l10n_il_withh_tax_id_number) != 9 or \
-                        str(self.my_company_id.l10n_il_withh_tax_id_number)[0] != '9':
-                    raise UserError("Please assign appropriate withholding tax ID number!")
-                else:
-                    data += str(self.my_company_id.l10n_il_withh_tax_id_number)  # Field number 2
-            else:
-                raise UserError("Please assign your withholding tax ID number!")
-            return data
+        def _process_corrects_file():
+            with open(self.sys1000_corrects_file) as file:
+                while True:
+                    current_field = file.read(1)
+                    if current_field != 'A':  # Field #10
+                        raise UserError("Problem with parsing file (Header line)")
+                        break
+                    current_field = file.read(9)  # Field #11 Withholding tax ID
+                    current_field = file.read(8)  # Field #12 Date
+                    current_field = file.read(1)  # Field #13 / #33
+                    if current_field != 'B' and current_field != 'Z':
+                        raise UserError("Problem with parsing file (Vendors line)")
+                        break
+                    while current_field == 'B':
+                        current_field = file.read(15)  # Field #14 Odoo ID
+                        current_field = file.read(9)  # Field #15 Income Tax ID
+                        current_field = file.read(9)  # Field #16 VAT ID Number
+                        current_field = file.read(9)  # Field #17 Income Tax ID From SYSTEM 1000
+                        current_field = file.read(9)  # Field #18 VAT ID Number From SYSTEM 1000
+                        current_field = file.read(22)  # Field #19 Vendor name
+                        current_field = file.read(1)  # Field #20 Confirmation of book management
+                        current_field = file.read(2)  # Field #21
+                        current_field = file.read(2)  # Field #22
+                        current_field = file.read(2)  # Field #23
+                        current_field = file.read(2)  # Field #24
+                        current_field = file.read(2)  # Field #25
+                        current_field = file.read(8)  # Field #26 Start date
+                        current_field = file.read(8)  # Field #27 End date
+                        current_field = file.read(8)  # Field #28 Confirmation date
+                        current_field = file.read(3)  # Field #29
+                        current_field = file.read(9)  # Field #30
+                        current_field = file.read(10)  # Field #31 Max amount
+                        current_field = file.read(9)  # Field #32
+                        current_field = file.read(1)  # Field #13 / #33
+                    if current_field != 'Z':
+                        raise UserError("Problem with parsing file (Conclusion line)")
+                        break
+                    current_field = file.read(9)  # Field #48 Withholding tax ID (Same as field 39)
+                    current_field = file.read(4)  # Field #49 number of vendors accepted in the export file
+                    current_field = file.read(4)  # Field #50 number of corrects vendors
+                    current_field = file.read(4)  # Field #51 number of incorrects vendors
 
-        def _prepare_inner_data(one_supplier):
-            data = ""
-            data += "B"  # Field number 3
-            data += str(one_supplier.id).zfill(15)  # Field number 4
-            if one_supplier.l10n_il_income_tax_id_number:
-                data += str(one_supplier.l10n_il_income_tax_id_number).zfill(9)  # Field number 5
-            else:
-                data += "".zfill(9)
-            if one_supplier.vat:
-                data += str(one_supplier.vat).zfill(9)  # Field number 6
-            else:
-                data += "".zfill(9)
-            return data
+                    file.close()
+                    break
 
-        def _prepare_closing_line():
-            data = ""
-            data += "Z"  # Field number 7
-            data += str(self.my_company_id.l10n_il_withh_tax_id_number).zfill(9)  # Field number 8
-            data += str(number_of_suppliers).zfill(4)  # Field number 9
-            return data
+    def check_button(self):
+        raise UserError("Test")
 
-        # Create export data up to 1000 suppliers
-        file_data += _prepare_header_line()
 
-        for supplier in suppliers:
-            file_data += _prepare_inner_data(supplier)
-            number_of_suppliers += 1
 
-        file_data += _prepare_closing_line()
-
-        return file_data
-
-    def export_system_1000_files(self):
-        today_date = date.today().strftime("%d%m%Y")
-        file_format = '.txt'
-
-        suppliers = self.env['res.partner'].search([('supplier_rank', '>', 0)])
-        number_of_suppliers = len(suppliers)
-
-        with closing(io.BytesIO()) as f:
-            with zipfile.ZipFile(f, 'w') as archive:
-                #  Up to 1000 suppliers
-                if number_of_suppliers <= 1000:
-                    file_number = 1
-                    file_name = str(self.my_company_id.l10n_il_withh_tax_id_number) + '_' + today_date + '_' + str(file_number).zfill(3) + file_format
-                    system_1000_data = self.prepare_one_file_of_system_1000_data(suppliers[:number_of_suppliers])
-                    archive.writestr(file_name, system_1000_data.encode('utf-8'))
-
-                #  Between 1000 to 2000 suppliers
-                elif number_of_suppliers <= 2000:
-                    file_number = 1
-                    file_name = str(self.my_company_id.l10n_il_withh_tax_id_number) + "_" + today_date + "_" + str(file_number).zfill(3) + file_format
-                    system_1000_data = self.prepare_one_file_of_system_1000_data(suppliers[:number_of_suppliers])
-                    archive.writestr(file_name, system_1000_data.encode('utf-8'))
-
-                    file_number = 2
-                    file_name = self.my_company_id.l10n_il_withh_tax_id_number + "_" + today_date + "_" + str(file_number).zfill(3) + file_format
-                    system_1000_data = self.prepare_one_file_of_system_1000_data(suppliers[1000:number_of_suppliers])
-                    archive.writestr(file_name, system_1000_data.encode('utf-8'))
-
-                #  Between 2000 to 3000 suppliers
-                elif number_of_suppliers <= 3000:
-                    file_number = 1
-                    file_name = self.my_company_id.l10n_il_withh_tax_id_number + "_" + today_date + "_" + str(file_number).zfill(3) + file_format
-                    system_1000_data = self.prepare_one_file_of_system_1000_data(suppliers[:number_of_suppliers])
-                    archive.writestr(file_name, system_1000_data.encode('utf-8'))
-
-                    file_number = 2
-                    file_name = self.my_company_id.l10n_il_withh_tax_id_number + "_" + today_date + "_" + str(file_number).zfill(3) + file_format
-                    system_1000_data = self.prepare_one_file_of_system_1000_data(suppliers[1000:number_of_suppliers])
-                    archive.writestr(file_name, system_1000_data.encode('utf-8'))
-
-                    file_number = 3
-                    file_name = self.my_company_id.l10n_il_withh_tax_id_number + "_" + today_date + "_" + str(file_number).zfill(3) + file_format
-                    system_1000_data = self.prepare_one_file_of_system_1000_data(suppliers[2000:number_of_suppliers])
-                    archive.writestr(file_name, system_1000_data.encode('utf-8'))
-
-                #  Over 3000 suppliers - Exception
-                else:
-                    raise UserError("System 1000 don't support over 3000 suppliers")
-
-            zip_data = f.getvalue()
-        self.write({'unified_system_1000_data': base64.encodestring(zip_data)})
-
-        action = {
-            'type': 'ir.actions.act_url',
-            'url': "web/content/?model=il.system.1000.export.file.wizard&id=" + str(self.id) +
-                   "&filename_field=filename&field=unified_system_1000_data&download=true&filename=" + self.filename,
-            'target': 'self'
-        }
-        return action
 
 

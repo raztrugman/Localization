@@ -12,11 +12,15 @@
                             <div>Upload corrects and incorrects files from SYSTEM 1000 of Israel Tax Authority(ITA)</div>
                         </h5>
                         <group>
-                            <button string="Uplaod"/>
+                            <field name="sys1000_corrects_file" filename="sys1000_corrects_file_name"/>
+                            <field name="sys1000_corrects_file_name" invisible="1"/>
+                            <field name="sys1000_incorrects_file" filename="sys1000_incorrects_file_name"/>
+                            <field name="sys1000_incorrects_file_name" invisible="1"/>
                         </group>
                     </sheet>
 
                     <footer>
+                        <button name="check_button" string="Analyze Files" special="analyze" class="oe_highlight" type="action"/>
                         <button string="Cancel" special="cancel"/>
                     </footer>
                 </form>
