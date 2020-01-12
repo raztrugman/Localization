@@ -1,2 +1,1 @@
 id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
-access_system_1000_export,access_system_1000_export,model_il_system_1000_export_file_wizard,account.group_account_user,1,0,0,0
