@@ -1,11 +1,11 @@
 # -*- encoding: utf-8 -*-
 
 {
-    'name': 'Israel - System 1000 Export file',
+    'name': 'Israel - System 1000 Import files',
     'version': '1.0',
     'category': 'Accounting',
     'description': """
-        System 1000 Export file for Israel
+        Import files from System 1000
     """,
     'website': '',
     'depends': [
