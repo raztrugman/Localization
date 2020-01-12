@@ -10,7 +10,6 @@
     'website': '',
     'depends': [
         'account',
-        'account_reports'
     ],
     'data': [
         'security/ir.model.access.csv',
