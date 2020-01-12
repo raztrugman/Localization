@@ -8,7 +8,7 @@
         <field name="target">new</field>
     </record>
 
-    <menuitem id="menu_system_1000" parent="account.menu_finance_reports" name="System 1000" groups="base.group_no_one" sequence="0"/>
+    <menuitem id="menu_system_1000" parent="account.menu_finance_reports" name="System 1000" groups="account.group_account_user" sequence="0"/>
     <menuitem id="menu_export_system_1000_file" parent="system_1000_export_file.menu_system_1000" name="Export System 1000 Files"
       action="export_system_1000_files_view_menu"/>
 </odoo>
